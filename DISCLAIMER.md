@@ -23,7 +23,9 @@ Linux bisa memakai perangkat yang secara resmi hanya didukung aplikasi Windows.
    **tidak bisa dimatikan** dan **logo pada panel tidak bisa diganti** lewat USB —
    keduanya urusan firmware vendor, bukan sesuatu yang bisa dilakukan proyek ini.
    Nilai yang ditampilkan panel terbatas dua digit dan berlabel °C.
-6. **Diuji pada** panel GAMEMAX IceBurg 240 Digital (HID `5131:2007`) di CachyOS
+6. **Diuji pada** panel GAMEMAX IceBurg 240 Digital (HID `5131:2007`) — rincian
+   perangkat keras (CPU Ryzen 5 5600, ASUS PRIME B550M-A WIFI II, Radeon RX 6600)
+   ada di README bagian *Tested hardware* — di CachyOS
    (Arch), kernel 7.2.9, KDE Plasma Wayland, Python 3.14. Revisi firmware lain bisa
    berbeda perilakunya; uji dulu dengan `--dry-run` (tidak menulis apa pun) sebelum
    dipakai rutin.

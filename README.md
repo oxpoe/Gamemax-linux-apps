@@ -30,6 +30,41 @@ vendor** — please read [DISCLAIMER.md](DISCLAIMER.md) before using it.
 |---|---|
 | ![normal](assets/preview.png) | ![blank mode](assets/preview-blank-mode.png) |
 
+## Tested hardware
+
+The target is the **LCD block of an AIO cooler**. Two things confuse people, so they are
+stated up front:
+
+1. `lsusb` shows this device as *"MSR MSR-101U Mini HID magnetic card reader"*. That is a
+   **VID/PID collision in the `usb.ids` database** (the `0x5131` range is shared by cheap
+   OEM modules), not what the device is. The HID report descriptor is vendor-defined
+   (`0xFF00`, 64-byte input + 64-byte output, no report IDs) — a card reader or keyboard
+   looks completely different. Check it yourself:
+
+   ```bash
+   cat /sys/class/hidraw/hidraw*/device/report_descriptor | xxd | head
+   ```
+
+2. The panel is not a general monitor. It belongs to one specific cooler family, and its
+   firmware decides what it renders (two digits, fixed `°C` label, its own animations).
+
+| Component | What it is / what it provides |
+|---|---|
+| Cooler + LCD panel | **GAMEMAX IceBurg 240 Digital BK** — 240 mm AIO, round 66×45 mm LCD block |
+| Panel USB identity | `VID 0x5131` / `PID 0x2007` · USB 1.10 full-speed · 2 × 64-byte interrupt endpoints · `bInterval` 160 ms · no report IDs |
+| Vendor software analysed | `PcInfoMonitorPro.exe` **V_1.0.0.04** ("IceBurg 240 Digital Software", [product page](https://gamemaxpc.com/cpu-liquid-cooler/1550.html)) |
+| CPU (temperature source) | AMD Ryzen 5 5600 → `k10temp` (`Tctl`, `Tccd1`; the script sends the highest) |
+| Motherboard (fan source) | ASUS PRIME B550M-A WIFI II → Nuvoton **`nct6798`** (`fan1..fan7`; only the connected headers read non-zero) |
+| GPU | AMD Radeon RX 6600 (Navi 23) → `amdgpu` hwmon (temp, fan, power, busy %) |
+| Memory / storage | 32 GB RAM · NVMe root filesystem |
+| OS / session | CachyOS (Arch) · kernel 7.2.9 · KDE Plasma on Wayland |
+| Tooling | Python 3.14.7 · PySide6 6.12.0 · hidraw (no kernel module, no driver patch) |
+
+Because fan headers differ per board, the fan channel is a **setting**, not a constant:
+the GUI lists every `fan*_input` channel with its current RPM and (if the chosen one reads
+0 RPM while another spins) tells you which channel to pick. Same idea for the CPU
+temperature source (Tctl vs Tccd).
+
 ## Features
 
 - Sends CPU temp/load/clock/fan/power, GPU temp/load/clock/fan/power, RAM and disk
