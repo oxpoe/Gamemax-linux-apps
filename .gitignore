@@ -1,0 +1,15 @@
+# build artefacts
+dist/
+build/
+*.AppImage
+__pycache__/
+*.pyc
+
+# machine-specific analysis artefacts (regenerate with REA)
+evidence/
+snapshots/
+*.rea.backup
+
+# local bits
+*.log
+config.json

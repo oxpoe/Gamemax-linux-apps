@@ -1,0 +1,13 @@
+[Unit]
+Description=GAMEMAX HID sensor display bridge (PcInfoMonitorPro replacement)
+Documentation=file:///mnt/SSD/Work/REVERSE-EGENERING/analysis/01-recon.md
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /mnt/SSD/Work/REVERSE-EGENERING/analysis/tools/gamemax_report.py --unit c --interval 0.5
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

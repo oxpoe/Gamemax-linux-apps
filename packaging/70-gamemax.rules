@@ -1,0 +1,5 @@
+# Vendor-defined HID device used by GAMEMAX PcInfoMonitorPro (VID 0x5131, PID 0x2007).
+# Grants the logged-in desktop user access to its hidraw node.
+# Install:  sudo cp 70-gamemax.rules /etc/udev/rules.d/
+#           sudo udevadm control --reload && sudo udevadm trigger --subsystem-match=hidraw
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="5131", ATTRS{idProduct}=="2007", TAG+="uaccess"
