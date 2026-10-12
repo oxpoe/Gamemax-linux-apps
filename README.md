@@ -24,6 +24,13 @@ vendor** — please read [DISCLAIMER.md](DISCLAIMER.md) before using it.
 
 ![Tray app preview](assets/preview.png)
 
+### On real hardware
+
+![GAMEMAX IceBurg 240 Digital LCD driven from Linux](assets/preview-panel.jpg)
+
+*The cooler's LCD while driven by this project on Linux, during protocol testing
+(GAMEMAX IceBurg 240 Digital BK).*
+
 ### Screen modes
 
 | Normal — sensor values | Blank — zeros (indicator is clear) |
