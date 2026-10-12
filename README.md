@@ -7,6 +7,9 @@ Reverse engineered independently from the Windows vendor software
 (`PcInfoMonitorPro.exe` / "IceBurg Digital Software"); the protocol notes are in
 [`docs/reverse-engineering.md`](docs/reverse-engineering.md) (Indonesian).
 
+[![Release](https://img.shields.io/github/v/release/oxpoe/Gamemax-linux-apps?color=def750&label=release)](https://github.com/oxpoe/Gamemax-linux-apps/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-def750)](LICENSE)
+
 Author: **oxpoe** · License: **MIT** · Independent project, **not affiliated with the
 vendor** — please read [DISCLAIMER.md](DISCLAIMER.md) before using it.
 
@@ -134,7 +137,16 @@ The tray app can do all of this for you (buttons *Pasang / perbarui layanan*,
 
 ## Tray app / AppImage
 
+**Download (recommended):** grab `GAMEMAX-LCD-x86_64.AppImage` from
+[Releases](../../releases) — it bundles PySide6, the sender script and the icon, and is
+built automatically from source by `.github/workflows/release.yml`.
+
 ```bash
+chmod +x GAMEMAX-LCD-x86_64.AppImage
+./GAMEMAX-LCD-x86_64.AppImage --selftest     # verify it starts (no display needed)
+./GAMEMAX-LCD-x86_64.AppImage                # window + tray
+
+# or run from source
 uv run --with pyside6 python src/gamemax_gui.py            # window + tray
 uv run --with pyside6 python src/gamemax_gui.py --tray-only
 
