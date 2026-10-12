@@ -7,9 +7,28 @@ Reverse engineered independently from the Windows vendor software
 (`PcInfoMonitorPro.exe` / "IceBurg Digital Software"); the protocol notes are in
 [`docs/reverse-engineering.md`](docs/reverse-engineering.md) (Indonesian).
 
-Author: **oxpoe** · License: **MIT** · Please read [DISCLAIMER.md](DISCLAIMER.md).
+Author: **oxpoe** · License: **MIT** · Independent project, **not affiliated with the
+vendor** — please read [DISCLAIMER.md](DISCLAIMER.md) before using it.
+
+> **Compatibility**
+> - **OS:** Linux only (Windows is handled by the vendor software). No kernel module,
+>   no patched driver — it talks to the standard `hidraw` interface.
+> - **Tested on:** CachyOS (Arch) · kernel 7.2.9 · KDE Plasma Wayland · Python 3.14,
+>   with the panel of a **GAMEMAX IceBurg 240 Digital BK** (HID `5131:2007`,
+>   vendor-defined usage page `0xFF00`, 64-byte reports).
+> - Other IceBurg Digital models/sizes very likely share the same protocol; if a panel
+>   revision differs, `gamemax_report.py --dry-run` lets you inspect the report without
+>   writing to the device.
+> - The panel keeps animating on its own; the firmware offers **no command to power the
+>   display off** and **no way to change the logo** — blank mode simply sends zeros.
 
 ![Tray app preview](assets/preview.png)
+
+### Screen modes
+
+| Normal — sensor values | Blank — zeros (indicator is clear) |
+|---|---|
+| ![normal](assets/preview.png) | ![blank mode](assets/preview-blank-mode.png) |
 
 ## Features
 
@@ -31,6 +50,9 @@ Author: **oxpoe** · License: **MIT** · Please read [DISCLAIMER.md](DISCLAIMER.
 The GUI labels are in Indonesian.
 
 ## Requirements
+
+- A GAMEMAX IceBurg Digital panel connected over USB (VID `0x5131`, PID `0x2007`)
+- `hidraw` access for your user (see the udev rule in *Install*)
 
 - Linux with a working `hidraw` stack (tested on CachyOS / Arch, KDE Wayland)
 - Python 3.10+ for the sender (stdlib only)
