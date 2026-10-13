@@ -27,11 +27,12 @@ from PySide6.QtGui import (QAction, QColor, QConicalGradient, QDesktopServices, 
                            QIcon, QPainter, QPen, QPixmap)
 from PySide6.QtWidgets import (
     QApplication, QCheckBox, QComboBox, QFormLayout, QGroupBox, QHBoxLayout, QLabel,
-    QMenu, QPlainTextEdit, QProgressBar, QPushButton, QSystemTrayIcon, QVBoxLayout, QWidget,
+    QMenu, QMessageBox, QPlainTextEdit, QProgressBar, QPushButton, QSystemTrayIcon,
+    QVBoxLayout, QWidget,
 )
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
 
-APP_VERSION = "1.2.3"
+APP_VERSION = "1.3.0"
 REPO = "oxpoe/Gamemax-linux-apps"
 RELEASES_API = f"https://api.github.com/repos/{REPO}/releases/latest"
 UPDATE_ASSET = "GAMEMAX-LCD-x86_64.AppImage"
@@ -65,6 +66,34 @@ WantedBy=default.target
 RULE_TEMPLATE = ('SUBSYSTEM=="hidraw", ATTRS{idVendor}=="5131", ATTRS{idProduct}=="2007", '
                  'TAG+="uaccess"\n')
 
+APP_QSS = """
+QWidget { background: #14121a; color: #ece6ff; font-size: 13px; }
+QLabel#hint { color: #a99fc4; }
+QGroupBox { border: 1px solid #2b2740; border-radius: 10px; margin-top: 14px;
+            padding: 12px 10px 8px 10px; font-weight: 600; }
+QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 6px; color: #a99fc4; }
+QPushButton { background: #242033; border: 1px solid #34304a; border-radius: 8px;
+              padding: 7px 13px; }
+QPushButton:hover { background: #2c2740; }
+QPushButton:pressed { background: #201c2e; }
+QPushButton:disabled { color: #6c6486; border-color: #2a2740; }
+QPushButton#primary { background: #def750; color: #14121a; border: none; font-weight: 700; }
+QPushButton#primary:hover { background: #e9ff6a; }
+QPushButton#primary:disabled { background: #4a5230; color: #2a2e20; }
+QComboBox, QDoubleSpinBox { background: #1c1926; border: 1px solid #34304a;
+                            border-radius: 8px; padding: 6px 8px; }
+QComboBox QAbstractItemView { background: #1c1926; border: 1px solid #2b2740;
+                              selection-background-color: #34304a; }
+QPlainTextEdit { background: #1c1926; border: 1px solid #2b2740; border-radius: 10px;
+                 padding: 6px; }
+QProgressBar { background: #1c1926; border: 1px solid #2b2740; border-radius: 6px; }
+QProgressBar::chunk { background: #def750; border-radius: 5px; }
+QCheckBox { spacing: 8px; }
+QCheckBox::indicator { width: 15px; height: 15px; border-radius: 4px;
+                       border: 1px solid #6c6486; background: #1c1926; }
+QCheckBox::indicator:checked { background: #def750; border-color: #def750; }
+QMessageBox { background: #1b1826; }
+"""
 CRASH_LOG = os.path.join(os.path.dirname(CONFIG_PATH), "gui-crash.log")
 ACCENT = QColor(222, 247, 80)      # warna aksen GAMEMAX dari appConfig.ini
 DIM = QColor(120, 128, 120)
@@ -302,15 +331,20 @@ class Window(QWidget):
         super().__init__()
         self.tray = tray
         self.prev_stat = gr.stat_snapshot()
-        self.setWindowTitle("GAMEMAX IceBurg LCD")
+        self.setWindowTitle(f"GAMEMAX IceBurg LCD v{APP_VERSION}")
         self.setWindowIcon(QIcon(icon_path()))
         self.setMinimumWidth(640)
         root = QVBoxLayout(self)
+        self._extra = {k: v for k, v in gr.load_config(CONFIG_PATH).items()
+                       if k in ("close_action", "geometry")}
+        geom = self._extra.get("geometry")
+        if isinstance(geom, list) and len(geom) == 4:
+            self.setGeometry(*[int(g) for g in geom])
 
         hint = QLabel("Kontrol layar LCD AIO GAMEMAX. Pilih slot kipas/sumber suhu di "
                       "<b>Pengaturan</b> lalu klik <b>Simpan &amp; terapkan</b>.")
+        hint.setObjectName("hint")
         hint.setWordWrap(True)
-        hint.setStyleSheet("color:#c8ccc8;")
         root.addWidget(hint)
 
         # ---- banner mode layar (jelas: normal / kosong / berhenti)
@@ -328,7 +362,7 @@ class Window(QWidget):
         controls = QHBoxLayout()
         self.toggle = QPushButton("Aktifkan layar")
         self.toggle.setMinimumHeight(38)
-        self.toggle.setStyleSheet("font-weight: bold;")
+        self.toggle.setObjectName("primary")
         self.toggle.clicked.connect(lambda: self.start_task("mengubah status layanan", self.on_toggle))
         self.toggle.setToolTip("Mulai/hentikan pengiriman data sensor ke layar LCD")
         controls.addWidget(self.toggle, 2)
@@ -413,6 +447,10 @@ class Window(QWidget):
         links.addWidget(donate)
         links.addWidget(github)
         links.addStretch(1)
+        copy_button = QPushButton("Salin report")
+        copy_button.setToolTip("Salin isi report 65 byte ke papan klip (untuk laporan bug)")
+        copy_button.clicked.connect(self.copy_report)
+        links.addWidget(copy_button)
         self.check_button = QPushButton("Periksa pembaruan")
         self.check_button.setToolTip("Bandingkan dengan rilis terbaru di GitHub")
         self.check_button.clicked.connect(lambda: self.start_task("memeriksa pembaruan", self.do_check_update))
@@ -447,7 +485,8 @@ class Window(QWidget):
         self.poll = QTimer(self, timeout=self.refresh, interval=1000)
         self.poll.start()
         self.refresh()
-        if installed_appimage():                     # hanya pada versi terpasang
+        testing = any(f in sys.argv for f in ("--selftest", "--selftest-actions"))
+        if installed_appimage() and not testing:     # hanya pada versi terpasang
             QTimer.singleShot(2500, lambda: self.start_task("memeriksa pembaruan",
                                                             self.do_check_update))
         if gr.load_config(CONFIG_PATH).get("blank"):
@@ -483,6 +522,7 @@ class Window(QWidget):
 
     def config(self):
         return {
+            **self._extra,
             "fan_channel": self.fan.currentData() or None,
             "temp_channel": self.temp.currentData() or None,
             "unit": "c",                      # panel hanya punya label °C
@@ -491,6 +531,67 @@ class Window(QWidget):
             "vendor_layout": False,
             "blank": bool(self.blank.isChecked()),
         }
+
+    def copy_report(self):
+        QApplication.clipboard().setText(getattr(self, "_report_hex", ""))
+        self.log("isi report disalin ke papan klip")
+
+    def save_geometry(self):
+        g = self.geometry()
+        self._extra["geometry"] = [g.x(), g.y(), g.width(), g.height()]
+        try:
+            self.write_config(self.config())
+        except OSError:
+            pass
+
+    def closeEvent(self, event):                      # noqa: N802 (Qt)
+        if getattr(self, "_quitting", False):
+            self.save_geometry()
+            event.accept()
+            return
+        action = self._extra.get("close_action", "ask")
+        if action == "tray" and self.tray.available():
+            self.save_geometry()
+            self.hide()
+            event.ignore()
+            return
+        if action == "quit":
+            self.save_geometry()
+            self._quitting = True
+            event.accept()
+            QApplication.quit()
+            return
+
+        box = QMessageBox(self)
+        box.setWindowTitle("Tutup GAMEMAX LCD")
+        box.setText("Sembunyikan ke tray atau keluar sepenuhnya?")
+        box.setInformativeText("Selama tersembunyi di tray, data sensor tetap dikirim ke layar.")
+        remember = QCheckBox("Ingat pilihan ini")
+        box.setCheckBox(remember)
+        hide_btn = box.addButton("Sembunyikan ke tray", QMessageBox.AcceptRole)
+        quit_btn = box.addButton("Keluar", QMessageBox.DestructiveRole)
+        box.addButton("Batal", QMessageBox.RejectRole)
+        if not self.tray.available():
+            hide_btn.setEnabled(False)
+            box.setInformativeText("Tray tidak tersedia di desktop ini — menutup jendela akan "
+                                   "menghentikan aplikasi.")
+        box.exec()
+        clicked = box.clickedButton()
+        if clicked is hide_btn:
+            if remember.isChecked():
+                self._extra["close_action"] = "tray"
+            self.save_geometry()
+            self.hide()
+            event.ignore()
+        elif clicked is quit_btn:
+            if remember.isChecked():
+                self._extra["close_action"] = "quit"
+            self.save_geometry()
+            self._quitting = True
+            event.accept()
+            QApplication.quit()
+        else:
+            event.ignore()
 
     # -------------------------------------------------------------- pembaruan
     def do_check_update(self):
@@ -817,7 +918,7 @@ class Tray:
         github_action = QAction("GitHub", menu)
         github_action.triggered.connect(lambda: open_link(GITHUB_URL, self.window))
         quit_action = QAction("Keluar", menu)
-        quit_action.triggered.connect(app.quit)
+        quit_action.triggered.connect(self.quit_app)
         menu.addAction(show)
         menu.addAction(toggle)
         menu.addAction(self.blank_action)
@@ -832,6 +933,13 @@ class Tray:
             lambda reason: self.show_window() if reason == QSystemTrayIcon.Trigger else None)
         self.window = Window(self)
         self.icon.show()
+
+    def available(self):
+        return QSystemTrayIcon.isSystemTrayAvailable()
+
+    def quit_app(self):
+        self.window._quitting = True
+        self.app.quit()
 
     def sync(self, active):
         blank = bool(gr.load_config(CONFIG_PATH).get("blank"))
@@ -869,6 +977,7 @@ def main():
 def _main():
     app = QApplication(sys.argv)
     app.setApplicationName("GAMEMAX LCD")
+    app.setStyleSheet(APP_QSS)
     app.setQuitOnLastWindowClosed(False)
 
     # hanya satu instance: yang kedua memunculkan jendela yang sudah ada lalu keluar
@@ -890,7 +999,14 @@ def _main():
 
     tray = Tray(app)
     server.newConnection.connect(lambda: tray.show_window())
-    app.aboutToQuit.connect(lambda: (server.close(), QLocalServer.removeServer(SOCKET_NAME)))
+    def on_quit():
+        task = getattr(tray.window, "_task", None)
+        if task is not None and task.isRunning():
+            task.wait(3000)
+        server.close()
+        QLocalServer.removeServer(SOCKET_NAME)
+
+    app.aboutToQuit.connect(on_quit)
     # Jendela selalu dibuka saat diluncurkan; tray tetap ada kalau didukung desktop.
     tray.show_window()
     if "--tray-only" in sys.argv:
@@ -950,6 +1066,7 @@ def _main():
         print("log:", " | ".join(w.logview.toPlainText().splitlines()[-6:]))
         return 0
     if "--selftest" in sys.argv:
+        tray.window._quitting = True                 # keluar otomatis: lewati dialog tutup
         QTimer.singleShot(1200, app.quit)
     rc = app.exec()
     if "--selftest" in sys.argv:
