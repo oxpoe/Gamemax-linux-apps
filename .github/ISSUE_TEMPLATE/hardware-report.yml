@@ -1,0 +1,57 @@
+name: Hardware report
+description: Report a GAMEMAX (or other) LCD cooler that works, partly works, or does not work
+title: "[hardware] <cooler model>"
+labels: ["hardware"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing on your hardware! Reports from other panel revisions are how
+        this project grows. Please fill in what you can.
+  - type: input
+    id: cooler
+    attributes:
+      label: Cooler / panel model
+      placeholder: e.g. GAMEMAX IceBurg 360 Digital WH
+    validations:
+      required: true
+  - type: input
+    id: usb
+    attributes:
+      label: USB identity (lsusb)
+      description: "`lsusb -d 5131:2007` — paste the line, or the VID:PID if it differs"
+    validations:
+      required: true
+  - type: dropdown
+    id: result
+    attributes:
+      label: Result
+      options:
+        - Works fully (values correct on the panel)
+        - Partly works (which fields are wrong?)
+        - Panel lights up but shows wrong layout
+        - Not detected / no reaction
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: Output of `python3 src/gamemax_report.py --dry-run`
+      description: This writes nothing to the device, it only prints the report it would send.
+      render: text
+    validations:
+      required: false
+  - type: input
+    id: system
+    attributes:
+      label: System
+      placeholder: distro · kernel · desktop session · motherboard super-I/O (e.g. nct6798)
+    validations:
+      required: false
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Which fan channel / temperature source you had to pick, anything unexpected.
+    validations:
+      required: false

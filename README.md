@@ -8,7 +8,22 @@ Reverse engineered independently from the Windows vendor software
 [`docs/reverse-engineering.md`](docs/reverse-engineering.md) (Indonesian).
 
 [![Release](https://img.shields.io/github/v/release/oxpoe/Gamemax-linux-apps?color=def750&label=release)](https://github.com/oxpoe/Gamemax-linux-apps/releases)
+[![Release build](https://github.com/oxpoe/Gamemax-linux-apps/actions/workflows/release.yml/badge.svg)](https://github.com/oxpoe/Gamemax-linux-apps/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-def750)](LICENSE)
+[![Platform: Linux](https://img.shields.io/badge/platform-Linux-def750)](#compatibility)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-def750)](src/gamemax_report.py)
+[![Dependencies: none](https://img.shields.io/badge/sender_dependencies-none-def750)](src/gamemax_report.py)
+[![Donate](https://img.shields.io/badge/%E2%9D%A4-donate-def750)](https://donasi.oxpoe.qzz.io/)
+
+```text
+ hwmon · /proc/stat · cpufreq · meminfo · statvfs
+                    │
+                    ▼
+        gamemax_report.py  ──►  65-byte HID report  ──►  LCD panel
+          (stdlib only)          hidraw, 5131:2007
+                    ▲
+        gamemax_gui.py (tray)  ──►  systemd user unit + udev rule
+```
 
 Author: **oxpoe** · License: **MIT** · Independent project, **not affiliated with the
 vendor** — please read [DISCLAIMER.md](DISCLAIMER.md) before using it.
