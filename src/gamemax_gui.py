@@ -30,7 +30,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
 
-APP_VERSION = "1.2.0"
+APP_VERSION = "1.2.1"
 REPO = "oxpoe/Gamemax-linux-apps"
 RELEASES_API = f"https://api.github.com/repos/{REPO}/releases/latest"
 UPDATE_ASSET = "GAMEMAX-LCD-x86_64.AppImage"
@@ -84,8 +84,21 @@ def version_tuple(tag):
     return tuple(int(p) for p in parts) or (0,)
 
 
+def ensure_ca_bundle():
+    """Bundel PyInstaller tidak menemukan CA sistem sendiri; arahkan OpenSSL ke sana."""
+    if os.environ.get("SSL_CERT_FILE"):
+        return
+    for path in ("/etc/ssl/certs/ca-certificates.crt",      # Arch/Debian
+                 "/etc/pki/tls/certs/ca-bundle.crt",        # Fedora/openSUSE
+                 "/etc/ssl/cert.pem"):                      # Alpine/BSD
+        if os.path.exists(path):
+            os.environ["SSL_CERT_FILE"] = path
+            return
+
+
 def latest_release():
     """(tag, url aset) dari rilis terbaru GitHub — dipanggil dari thread pekerja."""
+    ensure_ca_bundle()
     req = urllib.request.Request(RELEASES_API, headers={
         "Accept": "application/vnd.github+json", "User-Agent": "gamemax-lcd"})
     with urllib.request.urlopen(req, timeout=10) as resp:
@@ -487,6 +500,7 @@ class Window(QWidget):
         self.start_task(f"mengunduh {tag}", lambda: self.do_update(tag, url, target))
 
     def do_update(self, tag, url, target):
+        ensure_ca_bundle()
         tmp = target + ".new"
         urllib.request.urlretrieve(url, tmp)
         os.chmod(tmp, 0o755)
