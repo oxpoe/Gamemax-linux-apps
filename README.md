@@ -123,6 +123,16 @@ The GUI labels are in Indonesian.
 
 ## Install
 
+One command (downloads the latest release, verifies its SHA-256, installs the app, the
+systemd user unit, the menu entry and the udev rule):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/oxpoe/Gamemax-linux-apps/main/install.sh | bash
+# uninstall:  bash install.sh --uninstall        (add --remove-data to drop settings too)
+```
+
+Manual steps, if you prefer to see every command:
+
 ```bash
 # 1. device access for the logged-in user (once, needs root)
 sudo cp packaging/70-gamemax.rules /etc/udev/rules.d/
