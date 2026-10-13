@@ -423,9 +423,10 @@ def main():
     signal.signal(signal.SIGTERM, lambda *_: stop.set())
     signal.signal(signal.SIGINT, lambda *_: stop.set())
     print(f"menunggu {VID:#06x}:{PID:#06x} (Ctrl-C atau SIGTERM untuk berhenti)", flush=True)
+    last_message = None
     while not stop.is_set():
         if not find_device():
-            stop.wait(2)
+            stop.wait(1)
             continue
         try:
             result = stream(a, overrides)
@@ -433,8 +434,11 @@ def main():
                 sent, dt = result
                 print(f"perangkat terlepas setelah {sent} report ({sent / dt:.1f}/detik), menunggu lagi", flush=True)
         except OSError as exc:
-            print(f"galat perangkat ({exc}), menunggu lagi", flush=True)
-        stop.wait(2)
+            message = f"galat perangkat ({exc}), menunggu lagi"
+            if message != last_message:          # ACL udev baru aktif setelah sesi login
+                print(message, flush=True)
+                last_message = message
+        stop.wait(1)
     print("berhenti")
     return 0
 

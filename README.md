@@ -101,7 +101,10 @@ temperature source (Tctl vs Tccd).
   send/sample interval — saved to `~/.config/gamemax-report/config.json`
 - **Clear mode indicators**: green "showing sensor data" / orange "blank (zeros)" /
   grey "sending stopped", dimmed tray icon and a desktop notification per change
-- **Autostart** via a systemd user unit (equivalent of the vendor's Task Scheduler trick)
+- **Autostart** at login: a systemd user unit for the sender **and** an XDG autostart entry that
+  starts the tray app with `--tray-only` (no window pops up; open it from the tray menu). The
+  *Mulai otomatis saat login* checkbox manages both, and disables any other autostart entry that
+  would launch the same AppImage with a window.
 - **Plug and play**: the service waits for the device, streams while present and keeps
   waiting through unplug/replug; a udev rule grants access to the logged-in user
 - **Single instance**: launching the app again just raises the running window

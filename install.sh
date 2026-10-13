@@ -54,6 +54,7 @@ if [ "$UNINSTALL" = 1 ]; then
     systemctl --user reset-failed "$SERVICE" 2>/dev/null || true; }
   rm -rf "$OPT_DIR" "$DATA_DIR"
   rm -f "$DESKTOP_DIR/gamemax-lcd.desktop" "$ICON_DIR/gamemax-lcd.png"
+  rm -f "$HOME/.config/autostart/iceburg-lcd.desktop"
   [ "$REMOVE_DATA" = 1 ] && rm -rf "$HOME/.config/gamemax-report"
   command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database "$DESKTOP_DIR" 2>/dev/null || true
   if [ -f "$RULE" ]; then
@@ -135,7 +136,7 @@ else
   say "   dilewati (--no-service)"
 fi
 
-say "5/6 memasang entri menu + ikon …"
+say "5/6 memasang entri menu, ikon, dan autostart tray …"
 cat > "$DESKTOP_DIR/gamemax-lcd.desktop" <<EOF
 [Desktop Entry]
 Type=Application
@@ -150,6 +151,18 @@ EOF
 command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database "$DESKTOP_DIR" 2>/dev/null || true
 command -v gtk-update-icon-cache >/dev/null 2>&1 && \
   gtk-update-icon-cache -f -t "$HOME/.local/share/icons/hicolor" 2>/dev/null || true
+mkdir -p "$HOME/.config/autostart"
+cat > "$HOME/.config/autostart/iceburg-lcd.desktop" <<EOF
+[Desktop Entry]
+Type=Application
+Name=IceBurg LCD (tray)
+Comment=Layar LCD AIO — berjalan di tray saat login (tanpa jendela)
+Exec="$APP" --tray-only
+Icon=iceburg-lcd
+Terminal=false
+X-GNOME-Autostart-enabled=true
+EOF
+say "   autostart tray: ~/.config/autostart/iceburg-lcd.desktop (--tray-only)"
 
 say "6/6 aturan udev (izin device) …"
 RULE_TMP="$(mktemp)"

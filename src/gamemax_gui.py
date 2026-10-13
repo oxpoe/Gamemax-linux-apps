@@ -8,6 +8,7 @@ mengendalikannya dan memakai gamemax_report.py sebagai pengirim.
     gamemax_gui.py --tray-only  # tanpa jendela
     gamemax_gui.py --selftest   # uji muat tanpa tampilan (untuk build AppImage)
 """
+import glob
 import hashlib
 import json
 import math
@@ -32,7 +33,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
 
-APP_VERSION = "1.3.2"
+APP_VERSION = "1.3.3"
 APP_NAME = "IceBurg LCD"
 REPO = "oxpoe/Gamemax-linux-apps"
 RELEASES_API = f"https://api.github.com/repos/{REPO}/releases/latest"
@@ -49,6 +50,8 @@ CONFIG_PATH = gr.CONFIG_PATH
 INSTALL_DIR = os.path.expanduser("~/.local/share/gamemax-report")
 UNIT_PATH = os.path.expanduser(f"~/.config/systemd/user/{SERVICE}")
 RULE_PATH = "/etc/udev/rules.d/70-gamemax.rules"
+AUTOSTART_DIR = os.path.expanduser("~/.config/autostart")
+AUTOSTART_FILE = os.path.join(AUTOSTART_DIR, "iceburg-lcd.desktop")
 
 UNIT_TEMPLATE = """[Unit]
 Description=IceBurg LCD — HID sensor display bridge (Linux)
@@ -161,6 +164,63 @@ def open_link(url, parent=None):
     if not QDesktopServices.openUrl(QUrl(url)):
         if parent is not None:
             parent.log(f"tidak bisa membuka tautan: {url}")
+
+
+def other_autostart_entries(appimage):
+    """Entri autostart lain yang menjalankan AppImage yang sama (mis. buatan tool integrasi)."""
+    found = []
+    for path in glob.glob(os.path.join(AUTOSTART_DIR, "*.desktop")):
+        if path == AUTOSTART_FILE:
+            continue
+        try:
+            text = open(path).read()
+        except OSError:
+            continue
+        if appimage and appimage in text:
+            found.append(path)
+    return found
+
+
+def set_tray_autostart(enable, appimage):
+    """Autostart ikon tray saat login, tersembunyi (tanpa jendela)."""
+    if not appimage:
+        return "tidak berjalan dari AppImage — autostart tray dilewati"
+    os.makedirs(AUTOSTART_DIR, exist_ok=True)
+    notes = []
+    if enable:
+        with open(AUTOSTART_FILE, "w") as fh:
+            fh.write(f"""[Desktop Entry]
+Type=Application
+Name={APP_NAME} (tray)
+Comment=Layar LCD AIO — berjalan di tray saat login (tanpa jendela)
+Exec="{appimage}" --tray-only
+Icon=iceburg-lcd
+Terminal=false
+X-GNOME-Autostart-enabled=true
+""")
+        notes.append("autostart tray dibuat (--tray-only, tanpa jendela)")
+        for path in other_autostart_entries(appimage):
+            try:
+                text = open(path).read()
+                if "Hidden=true" not in text:
+                    with open(path, "a") as fh:
+                        fh.write("\nHidden=true\n")
+                    notes.append(f"entri autostart lain dinonaktifkan: {os.path.basename(path)}")
+            except OSError:
+                pass
+    else:
+        if os.path.exists(AUTOSTART_FILE):
+            os.unlink(AUTOSTART_FILE)
+            notes.append("autostart tray dihapus")
+        for path in other_autostart_entries(appimage):
+            try:
+                lines = [l for l in open(path).read().splitlines() if l.strip() != "Hidden=true"]
+                with open(path, "w") as fh:
+                    fh.write("\n".join(lines) + "\n")
+                notes.append(f"entri autostart lain diaktifkan kembali: {os.path.basename(path)}")
+            except OSError:
+                pass
+    return "; ".join(notes) or "tidak ada perubahan autostart tray"
 
 
 def systemctl(*args):
@@ -688,8 +748,10 @@ class Window(QWidget):
             systemctl("daemon-reload")
             res = systemctl("enable" if checked else "disable", SERVICE)
             state = service_enabled()
+            note = set_tray_autostart(checked, installed_appimage())
             return (f"mulai otomatis saat login: {'AKTIF' if state else 'nonaktif'}"
-                    + ("" if res.returncode == 0 else f" ({res.stderr.strip()})"))
+                    + ("" if res.returncode == 0 else f" ({res.stderr.strip()})")
+                    + f" | {note}")
         except Exception as exc:  # noqa: BLE001
             return f"galat autostart: {exc}"
 
