@@ -30,7 +30,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
 
-APP_VERSION = "1.2.1"
+APP_VERSION = "1.2.2"
 REPO = "oxpoe/Gamemax-linux-apps"
 RELEASES_API = f"https://api.github.com/repos/{REPO}/releases/latest"
 UPDATE_ASSET = "GAMEMAX-LCD-x86_64.AppImage"
@@ -685,6 +685,8 @@ class Window(QWidget):
 
     def log(self, text):
         self.logview.appendPlainText(text)
+        if os.environ.get("GAMEMAX_DEBUG"):
+            print(text, flush=True)
 
     def warn_once(self, text):
         if getattr(self, "_warned", None) != text:
@@ -896,8 +898,8 @@ def _main():
                  ("periksa pembaruan", w.do_check_update))
         for name, fn in steps:
             try:
-                fn()
-                print(f"[ OK ] {name}")
+                out = fn()
+                print(f"[ OK ] {name}" + (f" — {out}" if isinstance(out, str) and out else ""))
             except Exception as exc:  # noqa: BLE001
                 print(f"[GAGAL] {name}: {exc}")
         # jalur asinkron yang dipakai tombol: centang layar kosong + simpan
