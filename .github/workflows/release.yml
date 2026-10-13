@@ -29,6 +29,7 @@ jobs:
       - name: Build AppImage
         env:
           APPIMAGE_EXTRACT_AND_RUN: "1"
+          UPDATE_INFO_URL: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/GAMEMAX-LCD-x86_64.AppImage.zsync
         run: bash packaging/build_appimage.sh
 
       - name: Smoke test the bundle (no display)

@@ -51,13 +51,19 @@ Terminal=false
 Categories=System;Utility;
 EOF
 
-# 4. package
+# 4. package (UPDATE_INFO_URL menyematkan info zsync agar appimageupdatetool bisa jalan)
+UPDATE_INFO_ARG=""
+if [ -n "${UPDATE_INFO_URL:-}" ]; then
+  UPDATE_INFO_ARG="-u zsync|${UPDATE_INFO_URL}"
+  echo "embedding update information: ${UPDATE_INFO_URL}"
+fi
 if [ ! -x "$BUILD_DIR/appimagetool" ]; then
   curl -fsSL "$APPIMAGETOOL_URL" -o "$BUILD_DIR/appimagetool"
   chmod +x "$BUILD_DIR/appimagetool"
 fi
 OUT="$OUT_DIR/GAMEMAX-LCD-x86_64.AppImage"
-ARCH=x86_64 "$BUILD_DIR/appimagetool" "$APPDIR" "$OUT"
+# shellcheck disable=SC2086
+ARCH=x86_64 "$BUILD_DIR/appimagetool" $UPDATE_INFO_ARG "$APPDIR" "$OUT"
 chmod +x "$OUT"
 echo "built: $OUT"
 echo "verify: $OUT --selftest   (or APPIMAGE_EXTRACT_AND_RUN=1 $OUT --selftest)"

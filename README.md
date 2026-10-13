@@ -225,7 +225,9 @@ The app keeps itself current from GitHub Releases:
 
 Each release publishes three assets: the AppImage, its `.sha256`, and a `.zsync` file for
 `appimageupdatetool` / AppImageUpdate (delta updates). The zsync file is optional — the
-built-in updater does not need it.
+built-in updater does not need it — but the AppImage also carries the zsync URL as embedded
+update information (releases built after v1.2.3), so `appimageupdatetool ./GAMEMAX-LCD.AppImage`
+works directly.
 
 If the check fails (offline, proxy), the message appears in the app log. `GAMEMAX_DEBUG=1`
 also mirrors the log to stdout for headless runs.
