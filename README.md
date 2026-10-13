@@ -218,7 +218,14 @@ The app keeps itself current from GitHub Releases:
 - When a newer release exists, a **Perbarui ke vX.Y.Z** button appears. One click downloads
   the release asset, replaces the running AppImage atomically, refreshes the sender from the
   new bundle and restarts the service. Restart the app to use the new version.
+- The download is verified against the release's published **SHA-256** before the AppImage is
+  replaced; a mismatch aborts the update. Older releases without a checksum are updated with a
+  warning in the log.
 - Nothing is downloaded without that click, and no other files are touched.
+
+Each release publishes three assets: the AppImage, its `.sha256`, and a `.zsync` file for
+`appimageupdatetool` / AppImageUpdate (delta updates). The zsync file is optional — the
+built-in updater does not need it.
 
 If the check fails (offline, proxy), the message appears in the app log. `GAMEMAX_DEBUG=1`
 also mirrors the log to stdout for headless runs.

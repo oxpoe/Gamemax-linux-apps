@@ -8,6 +8,7 @@ mengendalikannya dan memakai gamemax_report.py sebagai pengirim.
     gamemax_gui.py --tray-only  # tanpa jendela
     gamemax_gui.py --selftest   # uji muat tanpa tampilan (untuk build AppImage)
 """
+import hashlib
 import json
 import math
 import os
@@ -30,7 +31,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
 
-APP_VERSION = "1.2.2"
+APP_VERSION = "1.2.3"
 REPO = "oxpoe/Gamemax-linux-apps"
 RELEASES_API = f"https://api.github.com/repos/{REPO}/releases/latest"
 UPDATE_ASSET = "GAMEMAX-LCD-x86_64.AppImage"
@@ -94,6 +95,19 @@ def ensure_ca_bundle():
         if os.path.exists(path):
             os.environ["SSL_CERT_FILE"] = path
             return
+
+
+def verify_sha256(path, sha_url):
+    """True/False bila berkas checksum tersedia, None bila rilis tidak menyediakannya."""
+    try:
+        with urllib.request.urlopen(sha_url, timeout=10) as resp:
+            expected = resp.read().decode().split()[0].strip().lower()
+    except Exception:  # noqa: BLE001
+        return None
+    if len(expected) != 64:
+        return None
+    actual = hashlib.sha256(open(path, "rb").read()).hexdigest()
+    return actual == expected
 
 
 def latest_release():
@@ -503,6 +517,10 @@ class Window(QWidget):
         ensure_ca_bundle()
         tmp = target + ".new"
         urllib.request.urlretrieve(url, tmp)
+        checked = verify_sha256(tmp, url + ".sha256")
+        if checked is False:
+            os.unlink(tmp)
+            raise RuntimeError("checksum SHA-256 tidak cocok — unduhan dibatalkan")
         os.chmod(tmp, 0o755)
         os.replace(tmp, target)                      # ganti berkas secara atomik
         # sender di layanan juga diambil dari bundel baru
@@ -514,7 +532,11 @@ class Window(QWidget):
                 os.makedirs(INSTALL_DIR, exist_ok=True)
                 shutil.copyfile(sender, os.path.join(INSTALL_DIR, "gamemax_report.py"))
                 systemctl("restart", SERVICE)
-        return f"diperbarui ke {tag} — tutup jendela ini lalu buka lagi untuk memakai versi baru"
+        note = "" if checked is None else " (checksum SHA-256 terverifikasi)"
+        if checked is None:
+            note = " (rilis ini tidak menyertakan checksum)"
+        return (f"diperbarui ke {tag}{note} — tutup jendela ini lalu buka lagi "
+                "untuk memakai versi baru")
 
     # -------------------------------------------------------------- tugas latar
     def start_task(self, label, fn):
