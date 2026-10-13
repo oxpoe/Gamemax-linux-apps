@@ -11,6 +11,9 @@ mengendalikannya dan memakai gamemax_report.py sebagai pengirim.
 import json
 import math
 import os
+import re
+import tempfile
+import urllib.request
 import shutil
 import subprocess
 import sys
@@ -27,7 +30,10 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
 
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.2.0"
+REPO = "oxpoe/Gamemax-linux-apps"
+RELEASES_API = f"https://api.github.com/repos/{REPO}/releases/latest"
+UPDATE_ASSET = "GAMEMAX-LCD-x86_64.AppImage"
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import gamemax_report as gr  # noqa: E402
@@ -71,6 +77,26 @@ def crash_log(text):
             fh.write(time.strftime("[%Y-%m-%d %H:%M:%S] ") + text.rstrip() + "\n")
     except OSError:
         pass
+
+
+def version_tuple(tag):
+    parts = re.findall(r"\d+", tag or "")[:3]
+    return tuple(int(p) for p in parts) or (0,)
+
+
+def latest_release():
+    """(tag, url aset) dari rilis terbaru GitHub — dipanggil dari thread pekerja."""
+    req = urllib.request.Request(RELEASES_API, headers={
+        "Accept": "application/vnd.github+json", "User-Agent": "gamemax-lcd"})
+    with urllib.request.urlopen(req, timeout=10) as resp:
+        data = json.load(resp)
+    asset = next((a for a in data.get("assets", []) if a["name"] == UPDATE_ASSET), None)
+    return data.get("tag_name", ""), (asset or {}).get("browser_download_url", "")
+
+
+def installed_appimage():
+    """Path AppImage yang sedang berjalan (kosong kalau dijalankan dari sumber)."""
+    return os.environ.get("APPIMAGE", "")
 
 
 def open_link(url, parent=None):
@@ -128,10 +154,12 @@ class Task(QThread):
     def __init__(self, label, fn):
         super().__init__()
         self.label, self.fn = label, fn
+        self.result = None
 
     def run(self):
         try:
-            self.done.emit(self.label, True, self.fn() or "")
+            self.result = self.fn()
+            self.done.emit(self.label, True, self.result if isinstance(self.result, str) else "")
         except Exception as exc:  # noqa: BLE001
             self.done.emit(self.label, False, str(exc))
 
@@ -358,6 +386,16 @@ class Window(QWidget):
         links.addWidget(donate)
         links.addWidget(github)
         links.addStretch(1)
+        self.check_button = QPushButton("Periksa pembaruan")
+        self.check_button.setToolTip("Bandingkan dengan rilis terbaru di GitHub")
+        self.check_button.clicked.connect(lambda: self.start_task("memeriksa pembaruan", self.do_check_update))
+        links.addWidget(self.check_button)
+        self.update_button = QPushButton("Perbarui")
+        self.update_button.setStyleSheet("font-weight:bold;")
+        self.update_button.hide()
+        self.update_button.clicked.connect(self.on_update_clicked)
+        links.addWidget(self.update_button)
+        links.addStretch(1)
         self.version_label = QLabel(f"v{APP_VERSION}")
         self.version_label.setStyleSheet("color:#8a8f8a;")
         links.addWidget(self.version_label)
@@ -382,6 +420,9 @@ class Window(QWidget):
         self.poll = QTimer(self, timeout=self.refresh, interval=1000)
         self.poll.start()
         self.refresh()
+        if installed_appimage():                     # hanya pada versi terpasang
+            QTimer.singleShot(2500, lambda: self.start_task("memeriksa pembaruan",
+                                                            self.do_check_update))
         if gr.load_config(CONFIG_PATH).get("blank"):
             self.log("PERHATIAN: mode layar kosong sedang aktif dari konfigurasi "
                      "(layar menampilkan nilai nol). Hilangkan centang 'Layar kosong' "
@@ -424,6 +465,43 @@ class Window(QWidget):
             "blank": bool(self.blank.isChecked()),
         }
 
+    # -------------------------------------------------------------- pembaruan
+    def do_check_update(self):
+        tag, url = latest_release()
+        self._pending_update = (tag, url) if url and version_tuple(tag) > version_tuple(APP_VERSION) else None
+        if not tag:
+            return "tidak bisa membaca daftar rilis GitHub"
+        if self._pending_update:
+            return f"versi baru tersedia: {tag} (terpasang v{APP_VERSION})"
+        return f"sudah versi terbaru (v{APP_VERSION})"
+
+    def on_update_clicked(self):
+        pending = getattr(self, "_pending_update", None)
+        target = installed_appimage()
+        if not pending:
+            return
+        if not target:
+            self.log("tidak berjalan dari AppImage — perbarui manual dari halaman Releases")
+            return
+        tag, url = pending
+        self.start_task(f"mengunduh {tag}", lambda: self.do_update(tag, url, target))
+
+    def do_update(self, tag, url, target):
+        tmp = target + ".new"
+        urllib.request.urlretrieve(url, tmp)
+        os.chmod(tmp, 0o755)
+        os.replace(tmp, target)                      # ganti berkas secara atomik
+        # sender di layanan juga diambil dari bundel baru
+        with tempfile.TemporaryDirectory() as td:
+            subprocess.run([target, "--appimage-extract"], cwd=td,
+                           capture_output=True, timeout=180)
+            sender = os.path.join(td, "squashfs-root/usr/bin/_internal/gamemax_report.py")
+            if os.path.exists(sender):
+                os.makedirs(INSTALL_DIR, exist_ok=True)
+                shutil.copyfile(sender, os.path.join(INSTALL_DIR, "gamemax_report.py"))
+                systemctl("restart", SERVICE)
+        return f"diperbarui ke {tag} — tutup jendela ini lalu buka lagi untuk memakai versi baru"
+
     # -------------------------------------------------------------- tugas latar
     def start_task(self, label, fn):
         if getattr(self, "_task", None) is not None and self._task.isRunning():
@@ -445,6 +523,10 @@ class Window(QWidget):
         for button in self.buttons:
             button.setEnabled(True)
         self.log(("selesai: " if ok else "GAGAL: ") + label + (f" — {message}" if message else ""))
+        pending = getattr(self, "_pending_update", None)
+        if label == "memeriksa pembaruan" and pending:
+            self.update_button.setText(f"Perbarui ke {pending[0]}")
+            self.update_button.show()
         self.refresh()
 
     # -------------------------------------------------------------- aksi
@@ -689,6 +771,9 @@ class Tray:
         toggle = QAction("Aktifkan / matikan", menu)
         toggle.triggered.connect(lambda: self.window.on_toggle())
         self.blank_action.triggered.connect(lambda checked: self.window.blank.setChecked(checked))
+        check_action = QAction("Periksa pembaruan", menu)
+        check_action.triggered.connect(lambda: self.window.start_task(
+            "memeriksa pembaruan", self.window.do_check_update))
         donate_action = QAction("❤  Donasi", menu)
         donate_action.triggered.connect(lambda: open_link(DONATE_URL, self.window))
         github_action = QAction("GitHub", menu)
@@ -699,6 +784,7 @@ class Tray:
         menu.addAction(toggle)
         menu.addAction(self.blank_action)
         menu.addSeparator()
+        menu.addAction(check_action)
         menu.addAction(donate_action)
         menu.addAction(github_action)
         menu.addSeparator()
@@ -792,7 +878,8 @@ def _main():
                  ("nyalakan layar", w.on_toggle),
                  ("autostart ON", lambda: w.on_autostart(True)),
                  ("kirim uji", w.send_test),
-                 ("pasang layanan", lambda: w.install_service(w.config())))
+                 ("pasang layanan", lambda: w.install_service(w.config())),
+                 ("periksa pembaruan", w.do_check_update))
         for name, fn in steps:
             try:
                 fn()
