@@ -18,18 +18,22 @@ import threading
 import time
 import traceback
 
-from PySide6.QtCore import QPointF, QRectF, Qt, QThread, QTimer, Signal
-from PySide6.QtGui import (QAction, QColor, QConicalGradient, QFont, QIcon,
-                           QPainter, QPen, QPixmap)
+from PySide6.QtCore import QPointF, QRectF, Qt, QThread, QTimer, QUrl, Signal
+from PySide6.QtGui import (QAction, QColor, QConicalGradient, QDesktopServices, QFont,
+                           QIcon, QPainter, QPen, QPixmap)
 from PySide6.QtWidgets import (
     QApplication, QCheckBox, QComboBox, QFormLayout, QGroupBox, QHBoxLayout, QLabel,
     QMenu, QPlainTextEdit, QProgressBar, QPushButton, QSystemTrayIcon, QVBoxLayout, QWidget,
 )
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
 
+APP_VERSION = "1.1.0"
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import gamemax_report as gr  # noqa: E402
+
+DONATE_URL = "https://donasi.oxpoe.qzz.io/"
+GITHUB_URL = "https://github.com/oxpoe/Gamemax-linux-apps"
 
 SERVICE = "gamemax-report.service"
 CONFIG_PATH = gr.CONFIG_PATH
@@ -67,6 +71,13 @@ def crash_log(text):
             fh.write(time.strftime("[%Y-%m-%d %H:%M:%S] ") + text.rstrip() + "\n")
     except OSError:
         pass
+
+
+def open_link(url, parent=None):
+    """Buka tautan di peramban; kalau gagal, tampilkan pesannya di log."""
+    if not QDesktopServices.openUrl(QUrl(url)):
+        if parent is not None:
+            parent.log(f"tidak bisa membuka tautan: {url}")
 
 
 def systemctl(*args):
@@ -335,6 +346,22 @@ class Window(QWidget):
         self.buttons += [save, install, rule]
         form.addRow("", row)
         root.addWidget(settings)
+
+        # ---- tautan
+        links = QHBoxLayout()
+        donate = QPushButton("❤  Donasi")
+        donate.setToolTip(DONATE_URL)
+        donate.clicked.connect(lambda: open_link(DONATE_URL, self))
+        github = QPushButton("GitHub")
+        github.setToolTip(GITHUB_URL)
+        github.clicked.connect(lambda: open_link(GITHUB_URL, self))
+        links.addWidget(donate)
+        links.addWidget(github)
+        links.addStretch(1)
+        self.version_label = QLabel(f"v{APP_VERSION}")
+        self.version_label.setStyleSheet("color:#8a8f8a;")
+        links.addWidget(self.version_label)
+        root.addLayout(links)
 
         # ---- detail + log
         self.detail = QPlainTextEdit()
@@ -662,11 +689,18 @@ class Tray:
         toggle = QAction("Aktifkan / matikan", menu)
         toggle.triggered.connect(lambda: self.window.on_toggle())
         self.blank_action.triggered.connect(lambda checked: self.window.blank.setChecked(checked))
+        donate_action = QAction("❤  Donasi", menu)
+        donate_action.triggered.connect(lambda: open_link(DONATE_URL, self.window))
+        github_action = QAction("GitHub", menu)
+        github_action.triggered.connect(lambda: open_link(GITHUB_URL, self.window))
         quit_action = QAction("Keluar", menu)
         quit_action.triggered.connect(app.quit)
         menu.addAction(show)
         menu.addAction(toggle)
         menu.addAction(self.blank_action)
+        menu.addSeparator()
+        menu.addAction(donate_action)
+        menu.addAction(github_action)
         menu.addSeparator()
         menu.addAction(quit_action)
         self.icon.setContextMenu(menu)

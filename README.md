@@ -90,6 +90,7 @@ temperature source (Tctl vs Tccd).
 - **Plug and play**: the service waits for the device, streams while present and keeps
   waiting through unplug/replug; a udev rule grants access to the logged-in user
 - **Single instance**: launching the app again just raises the running window
+- **Donate / GitHub buttons** in the app (window and tray menu)
 - **AppImage build** script (`packaging/build_appimage.sh`, PySide6 bundled)
 
 The GUI labels are in Indonesian.
@@ -191,6 +192,15 @@ tools/       ildump.py, string_refs.py — helpers used to read the vendor MSIL
 docs/        reverse-engineering.md — full analysis (Indonesian)
 assets/      previews and icon
 ```
+
+## Support
+
+If this project is useful to you:
+
+- ❤ **Donate:** <https://donasi.oxpoe.qzz.io/> (buttons for it and for this repository are
+  in the app: window bottom row and the tray menu)
+- ⭐ Star the repo, or open an issue with your cooler model and what worked — reports from
+  other IceBurg Digital revisions are the best way to widen hardware support.
 
 ## Credits
 
