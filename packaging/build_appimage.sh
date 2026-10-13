@@ -42,9 +42,9 @@ cp "$ROOT_DIR/src/icon.png" "$APPDIR/gamemax-lcd.png"
 cat > "$APPDIR/gamemax-lcd.desktop" <<'EOF'
 [Desktop Entry]
 Type=Application
-Name=GAMEMAX IceBurg LCD
-GenericName=AI LCD controller
-Comment=Status, on/off, monitor, and settings for the GAMEMAX IceBurg AIO LCD
+Name=IceBurg LCD
+GenericName=Kontrol LCD AIO
+Comment=Status, nyala/mati, pemantauan, dan pengaturan LCD AIO IceBurg Digital
 Exec=gamemax-lcd
 Icon=gamemax-lcd
 Terminal=false

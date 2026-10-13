@@ -32,7 +32,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
 
-APP_VERSION = "1.3.1"
+APP_VERSION = "1.3.2"
 APP_NAME = "IceBurg LCD"
 REPO = "oxpoe/Gamemax-linux-apps"
 RELEASES_API = f"https://api.github.com/repos/{REPO}/releases/latest"
