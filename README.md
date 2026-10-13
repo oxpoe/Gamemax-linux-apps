@@ -109,7 +109,8 @@ temperature source (Tctl vs Tccd).
 - **Donate / GitHub buttons** in the app (window and tray menu)
 - **AppImage build** script (`packaging/build_appimage.sh`, PySide6 bundled)
 
-The GUI labels are in Indonesian.
+The GUI labels are in Indonesian. The app itself is named **IceBurg LCD** (no vendor brand in
+the UI); the repository keeps the hardware and brand name only to describe what it supports.
 
 ## Requirements
 

@@ -1,5 +1,5 @@
 [Unit]
-Description=GAMEMAX HID sensor display bridge (PcInfoMonitorPro replacement)
+Description=IceBurg LCD — HID sensor display bridge (Linux)
 Documentation=file:///mnt/SSD/Work/REVERSE-EGENERING/analysis/01-recon.md
 After=graphical-session.target
 

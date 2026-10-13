@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GAMEMAX IceBurg LCD — GUI tray: status, nyala/mati, pemantauan beranimasi, pengaturan.
+"""IceBurg LCD — GUI tray: status, nyala/mati, pemantauan beranimasi, pengaturan.
 
 Streaming tetap dijalankan oleh layanan systemd (gamemax-report.service); GUI ini
 mengendalikannya dan memakai gamemax_report.py sebagai pengirim.
@@ -32,7 +32,8 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
 
-APP_VERSION = "1.3.0"
+APP_VERSION = "1.3.1"
+APP_NAME = "IceBurg LCD"
 REPO = "oxpoe/Gamemax-linux-apps"
 RELEASES_API = f"https://api.github.com/repos/{REPO}/releases/latest"
 UPDATE_ASSET = "GAMEMAX-LCD-x86_64.AppImage"
@@ -50,7 +51,7 @@ UNIT_PATH = os.path.expanduser(f"~/.config/systemd/user/{SERVICE}")
 RULE_PATH = "/etc/udev/rules.d/70-gamemax.rules"
 
 UNIT_TEMPLATE = """[Unit]
-Description=GAMEMAX HID sensor display bridge (PcInfoMonitorPro replacement)
+Description=IceBurg LCD — HID sensor display bridge (Linux)
 After=graphical-session.target
 
 [Service]
@@ -331,7 +332,7 @@ class Window(QWidget):
         super().__init__()
         self.tray = tray
         self.prev_stat = gr.stat_snapshot()
-        self.setWindowTitle(f"GAMEMAX IceBurg LCD v{APP_VERSION}")
+        self.setWindowTitle(f"{APP_NAME} v{APP_VERSION}")
         self.setWindowIcon(QIcon(icon_path()))
         self.setMinimumWidth(640)
         root = QVBoxLayout(self)
@@ -341,7 +342,7 @@ class Window(QWidget):
         if isinstance(geom, list) and len(geom) == 4:
             self.setGeometry(*[int(g) for g in geom])
 
-        hint = QLabel("Kontrol layar LCD AIO GAMEMAX. Pilih slot kipas/sumber suhu di "
+        hint = QLabel("Kontrol layar LCD AIO IceBurg Digital. Pilih slot kipas/sumber suhu di "
                       "<b>Pengaturan</b> lalu klik <b>Simpan &amp; terapkan</b>.")
         hint.setObjectName("hint")
         hint.setWordWrap(True)
@@ -563,7 +564,7 @@ class Window(QWidget):
             return
 
         box = QMessageBox(self)
-        box.setWindowTitle("Tutup GAMEMAX LCD")
+        box.setWindowTitle(f"Tutup {APP_NAME}")
         box.setText("Sembunyikan ke tray atau keluar sepenuhnya?")
         box.setInformativeText("Selama tersembunyi di tray, data sensor tetap dikirim ke layar.")
         remember = QCheckBox("Ingat pilihan ini")
@@ -846,7 +847,7 @@ class Window(QWidget):
                           "kosong": "Layar dikosongkan (nilai nol)",
                           "berhenti": "Pengiriman data dihentikan"}
                 if mode != "normal" or getattr(self, "_mode_seen", False):
-                    subprocess.run(["notify-send", "-a", "GAMEMAX LCD", "Status layar",
+                    subprocess.run(["notify-send", "-a", APP_NAME, "Status layar",
                                     labels[mode]], capture_output=True)
                 self._mode_seen = True
             dot = "🟢" if active else "⚪"
@@ -945,7 +946,7 @@ class Tray:
         blank = bool(gr.load_config(CONFIG_PATH).get("blank"))
         state = ("layar kosong (nilai nol)" if blank and active
                  else ("pengiriman dihentikan" if not active else "normal"))
-        self.icon.setToolTip(f"GAMEMAX LCD: {state}")
+        self.icon.setToolTip(f"{APP_NAME}: {state}")
         base = icon_path()
         self.icon.setIcon(dimmed_icon(base) if state != "normal" else QIcon(base))
         window = getattr(self, "window", None)
@@ -959,7 +960,7 @@ class Tray:
         self.window.raise_()
         self.window.activateWindow()
         if QSystemTrayIcon.isSystemTrayAvailable():
-            self.icon.showMessage("GAMEMAX LCD", "Jendela dibuka dari permintaan kedua.",
+            self.icon.showMessage(APP_NAME, "Jendela dibuka dari permintaan kedua.",
                                   QSystemTrayIcon.Information, 3000)
 
 
@@ -976,7 +977,7 @@ def main():
 
 def _main():
     app = QApplication(sys.argv)
-    app.setApplicationName("GAMEMAX LCD")
+    app.setApplicationName(APP_NAME)
     app.setStyleSheet(APP_QSS)
     app.setQuitOnLastWindowClosed(False)
 
@@ -986,10 +987,10 @@ def _main():
     if probe.waitForConnected(400):
         probe.write(b"raise")
         probe.waitForBytesWritten(400)
-        print("GAMEMAX LCD sudah berjalan — instance pertama diminta membuka jendelanya.")
+        print(f"{APP_NAME} sudah berjalan — instance pertama diminta membuka jendelanya.")
         # Beri tahu lewat notifikasi desktop juga, karena keluarnya proses kedua bisa
         # terlihat seperti crash saat diluncurkan dari menu.
-        subprocess.run(["notify-send", "-a", "GAMEMAX LCD", "Sudah berjalan",
+        subprocess.run(["notify-send", "-a", APP_NAME, "Sudah berjalan",
                         "Aplikasi sudah aktif — jendelanya dibuka, cek taskbar/tray."],
                        capture_output=True)
         return 0

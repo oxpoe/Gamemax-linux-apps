@@ -114,7 +114,7 @@ rm -rf "$TMP"
 say "4/6 memasang layanan systemd (autostart + plug and play) …"
 cat > "$UNIT" <<EOF
 [Unit]
-Description=GAMEMAX HID sensor display bridge (PcInfoMonitorPro replacement)
+Description=IceBurg LCD — HID sensor display bridge (Linux)
 After=graphical-session.target
 
 [Service]
@@ -139,9 +139,9 @@ say "5/6 memasang entri menu + ikon …"
 cat > "$DESKTOP_DIR/gamemax-lcd.desktop" <<EOF
 [Desktop Entry]
 Type=Application
-Name=GAMEMAX IceBurg LCD
+Name=IceBurg LCD
 GenericName=Kontrol LCD AIO
-Comment=Status, nyala/mati, pemantauan, dan pengaturan LCD AIO GAMEMAX IceBurg
+Comment=Status, nyala/mati, pemantauan, dan pengaturan LCD AIO IceBurg Digital
 Exec="$APP"
 Icon=gamemax-lcd
 Terminal=false
