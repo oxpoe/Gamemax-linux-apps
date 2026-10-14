@@ -9,8 +9,8 @@ Reverse engineered independently from the Windows vendor software
 (`PcInfoMonitorPro.exe` / "IceBurg Digital Software"); the protocol notes are in
 [`docs/reverse-engineering.md`](docs/reverse-engineering.md) (Indonesian).
 
-[![Release](https://img.shields.io/github/v/release/oxpoe/Gamemax-linux-apps?color=def750&label=release)](https://github.com/oxpoe/Gamemax-linux-apps/releases)
-[![Release build](https://github.com/oxpoe/Gamemax-linux-apps/actions/workflows/release.yml/badge.svg)](https://github.com/oxpoe/Gamemax-linux-apps/actions/workflows/release.yml)
+[![Release](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fgitea.oxpoe.qzz.io%2Fapi%2Fv1%2Frepos%2Foxpoe%2FGamemax-linux-apps%2Freleases%2Flatest&query=%24.tag_name&label=release&color=def750&logo=gitea)](https://gitea.oxpoe.qzz.io/oxpoe/Gamemax-linux-apps/releases)
+[![Release build](https://gitea.oxpoe.qzz.io/oxpoe/Gamemax-linux-apps/actions/workflows/release.yml/badge.svg)](https://gitea.oxpoe.qzz.io/oxpoe/Gamemax-linux-apps/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-def750)](LICENSE)
 [![Platform: Linux](https://img.shields.io/badge/platform-Linux-def750)](#compatibility)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-def750)](src/gamemax_report.py)
@@ -133,7 +133,7 @@ One command (downloads the latest release, verifies its SHA-256, installs the ap
 systemd user unit, the menu entry and the udev rule):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/oxpoe/Gamemax-linux-apps/main/install.sh | bash
+curl -fsSL https://gitea.oxpoe.qzz.io/oxpoe/Gamemax-linux-apps/raw/branch/main/install.sh | bash
 # uninstall:  bash install.sh --uninstall        (add --remove-data to drop settings too)
 ```
 

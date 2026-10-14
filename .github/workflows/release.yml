@@ -1,6 +1,6 @@
 name: release
 
-# Build the GAMEMAX LCD AppImage from source and attach it to a GitHub release.
+# Build the GAMEMAX LCD AppImage from source and attach it to a Gitea release.
 # Trigger: push a tag like v1.0.0 (or run manually from the Actions tab).
 
 on:
@@ -29,7 +29,7 @@ jobs:
       - name: Build AppImage
         env:
           APPIMAGE_EXTRACT_AND_RUN: "1"
-          UPDATE_INFO_URL: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/GAMEMAX-LCD-x86_64.AppImage.zsync
+          UPDATE_INFO_URL: ${{ github.server_url }}/${{ github.repository }}/releases/download/${{ github.ref_name }}/GAMEMAX-LCD-x86_64.AppImage.zsync
         run: bash packaging/build_appimage.sh
 
       - name: Smoke test the bundle (no display)
@@ -43,7 +43,7 @@ jobs:
         run: |
           cd dist
           sha256sum GAMEMAX-LCD-x86_64.AppImage > GAMEMAX-LCD-x86_64.AppImage.sha256
-          zsyncmake -u "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/GAMEMAX-LCD-x86_64.AppImage" \
+          zsyncmake -u "${{ github.server_url }}/${{ github.repository }}/releases/download/${{ github.ref_name }}/GAMEMAX-LCD-x86_64.AppImage" \
             -o GAMEMAX-LCD-x86_64.AppImage.zsync GAMEMAX-LCD-x86_64.AppImage
           cat GAMEMAX-LCD-x86_64.AppImage.sha256
           ls -l

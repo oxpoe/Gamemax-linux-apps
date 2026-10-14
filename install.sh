@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # GAMEMAX LCD — pemasangan / pelepasan satu perintah.
 #
-#   curl -fsSL https://raw.githubusercontent.com/oxpoe/Gamemax-linux-apps/main/install.sh | bash
+#   curl -fsSL https://gitea.oxpoe.qzz.io/oxpoe/Gamemax-linux-apps/raw/branch/main/install.sh | bash
 #
 # Opsi:
 #   --uninstall      lepaskan pemasangan (layanan, aplikasi, config, ikon, entri menu)
@@ -15,7 +15,8 @@ set -euo pipefail
 
 REPO="oxpoe/Gamemax-linux-apps"
 ASSET="GAMEMAX-LCD-x86_64.AppImage"
-RAW="https://raw.githubusercontent.com/$REPO/main"
+INSTANCE="https://gitea.oxpoe.qzz.io"
+RAW="$INSTANCE/$REPO/raw/branch/main"
 
 OPT_DIR="$HOME/.local/opt/gamemax-lcd"
 APP="$OPT_DIR/GAMEMAX-LCD.AppImage"
@@ -76,10 +77,10 @@ need sha256sum
 command -v systemctl >/dev/null 2>&1 || die "systemd (systemctl) dibutuhkan untuk layanan"
 
 if [ "$VERSION" = "latest" ]; then
-  BASE="https://github.com/$REPO/releases/latest/download"
-else
-  BASE="https://github.com/$REPO/releases/download/$VERSION"
+  VERSION="$(curl -fsSL "$INSTANCE/api/v1/repos/$REPO/releases/latest" | sed -n 's/.*"tag_name":"\([^"]*\)".*/\1/p')"
+  [ -n "$VERSION" ] || die "gagal menentukan rilis terbaru di Gitea"
 fi
+BASE="$INSTANCE/$REPO/releases/download/$VERSION"
 
 say "== GAMEMAX LCD: pemasangan ($VERSION) =="
 mkdir -p "$OPT_DIR" "$DATA_DIR" "$DESKTOP_DIR" "$ICON_DIR" "$HOME/.config/systemd/user"

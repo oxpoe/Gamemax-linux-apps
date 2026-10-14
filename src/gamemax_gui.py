@@ -36,14 +36,14 @@ from PySide6.QtNetwork import QLocalServer, QLocalSocket
 APP_VERSION = "1.3.3"
 APP_NAME = "IceBurg LCD"
 REPO = "oxpoe/Gamemax-linux-apps"
-RELEASES_API = f"https://api.github.com/repos/{REPO}/releases/latest"
+RELEASES_API = f"https://gitea.oxpoe.qzz.io/api/v1/repos/{REPO}/releases/latest"
 UPDATE_ASSET = "GAMEMAX-LCD-x86_64.AppImage"
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import gamemax_report as gr  # noqa: E402
 
 DONATE_URL = "https://donasi.oxpoe.qzz.io/"
-GITHUB_URL = "https://github.com/oxpoe/Gamemax-linux-apps"
+REPO_URL = "https://gitea.oxpoe.qzz.io/oxpoe/Gamemax-linux-apps"
 
 SERVICE = "gamemax-report.service"
 CONFIG_PATH = gr.CONFIG_PATH
@@ -144,10 +144,10 @@ def verify_sha256(path, sha_url):
 
 
 def latest_release():
-    """(tag, url aset) dari rilis terbaru GitHub — dipanggil dari thread pekerja."""
+    """(tag, url aset) dari rilis terbaru Gitea — dipanggil dari thread pekerja."""
     ensure_ca_bundle()
     req = urllib.request.Request(RELEASES_API, headers={
-        "Accept": "application/vnd.github+json", "User-Agent": "gamemax-lcd"})
+        "Accept": "application/json", "User-Agent": "gamemax-lcd"})
     with urllib.request.urlopen(req, timeout=10) as resp:
         data = json.load(resp)
     asset = next((a for a in data.get("assets", []) if a["name"] == UPDATE_ASSET), None)
@@ -502,18 +502,18 @@ class Window(QWidget):
         donate = QPushButton("❤  Donasi")
         donate.setToolTip(DONATE_URL)
         donate.clicked.connect(lambda: open_link(DONATE_URL, self))
-        github = QPushButton("GitHub")
-        github.setToolTip(GITHUB_URL)
-        github.clicked.connect(lambda: open_link(GITHUB_URL, self))
+        repo_btn = QPushButton("Gitea")
+        repo_btn.setToolTip(REPO_URL)
+        repo_btn.clicked.connect(lambda: open_link(REPO_URL, self))
         links.addWidget(donate)
-        links.addWidget(github)
+        links.addWidget(repo_btn)
         links.addStretch(1)
         copy_button = QPushButton("Salin report")
         copy_button.setToolTip("Salin isi report 65 byte ke papan klip (untuk laporan bug)")
         copy_button.clicked.connect(self.copy_report)
         links.addWidget(copy_button)
         self.check_button = QPushButton("Periksa pembaruan")
-        self.check_button.setToolTip("Bandingkan dengan rilis terbaru di GitHub")
+        self.check_button.setToolTip("Bandingkan dengan rilis terbaru di Gitea")
         self.check_button.clicked.connect(lambda: self.start_task("memeriksa pembaruan", self.do_check_update))
         links.addWidget(self.check_button)
         self.update_button = QPushButton("Perbarui")
@@ -659,7 +659,7 @@ class Window(QWidget):
         tag, url = latest_release()
         self._pending_update = (tag, url) if url and version_tuple(tag) > version_tuple(APP_VERSION) else None
         if not tag:
-            return "tidak bisa membaca daftar rilis GitHub"
+            return "tidak bisa membaca daftar rilis Gitea"
         if self._pending_update:
             return f"versi baru tersedia: {tag} (terpasang v{APP_VERSION})"
         return f"sudah versi terbaru (v{APP_VERSION})"
@@ -978,8 +978,8 @@ class Tray:
             "memeriksa pembaruan", self.window.do_check_update))
         donate_action = QAction("❤  Donasi", menu)
         donate_action.triggered.connect(lambda: open_link(DONATE_URL, self.window))
-        github_action = QAction("GitHub", menu)
-        github_action.triggered.connect(lambda: open_link(GITHUB_URL, self.window))
+        repo_action = QAction("Gitea", menu)
+        repo_action.triggered.connect(lambda: open_link(REPO_URL, self.window))
         quit_action = QAction("Keluar", menu)
         quit_action.triggered.connect(self.quit_app)
         menu.addAction(show)
@@ -988,7 +988,7 @@ class Tray:
         menu.addSeparator()
         menu.addAction(check_action)
         menu.addAction(donate_action)
-        menu.addAction(github_action)
+        menu.addAction(repo_action)
         menu.addSeparator()
         menu.addAction(quit_action)
         self.icon.setContextMenu(menu)
