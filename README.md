@@ -1,4 +1,4 @@
-> 🪞 **Mirror.** Repo asli & pengembangan ada di **Gitea**: https://gitea.oxpoe.qzz.io/oxpoe/Gamemax-linux-apps
+> 🪞 **Mirror.** Repo asli, pengembangan & **rilis/unduhan** ada di **Gitea**: https://gitea.oxpoe.qzz.io/oxpoe/Gamemax-linux-apps/releases · GitHub hanya cermin kode.
 
 # GAMEMAX LCD — Linux bridge & tray app
 
