@@ -1,3 +1,5 @@
+> 🪞 **Mirror.** Repo asli & pengembangan ada di **Gitea**: https://gitea.oxpoe.qzz.io/oxpoe/Gamemax-linux-apps
+
 # GAMEMAX LCD — Linux bridge & tray app
 
 Drive the LCD panel of a GAMEMAX **IceBurg Digital** AIO cooler from Linux: a small
