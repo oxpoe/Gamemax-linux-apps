@@ -11,4 +11,4 @@ This is a small local tool. The relevant surface:
 
 If you find a problem — for example a way to make the helper scripts run something else,
 or a path that writes outside the documented locations — please open an issue (or a
-private security advisory on GitHub). Do not test on hardware you do not own.
+private security advisory on Gitea). Do not test on hardware you do not own.

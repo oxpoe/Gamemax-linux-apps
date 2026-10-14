@@ -110,8 +110,8 @@ temperature source (Tctl vs Tccd).
 - **Plug and play**: the service waits for the device, streams while present and keeps
   waiting through unplug/replug; a udev rule grants access to the logged-in user
 - **Single instance**: launching the app again just raises the running window
-- **Self-update from GitHub Releases** (check + one-click update)
-- **Donate / GitHub buttons** in the app (window and tray menu)
+- **Self-update from Gitea Releases** (check + one-click update)
+- **Donate / Gitea buttons** in the app (window and tray menu)
 - **AppImage build** script (`packaging/build_appimage.sh`, PySide6 bundled)
 
 The GUI labels are in Indonesian. The app itself is named **IceBurg LCD** (no vendor brand in
@@ -227,10 +227,10 @@ assets/      previews and icon
 
 ## Updates
 
-The app keeps itself current from GitHub Releases:
+The app keeps itself current from Gitea Releases:
 
 - On start (when running from an AppImage) and from the **Periksa pembaruan** button or the
-  tray menu, it asks the GitHub API for the latest release and compares it with its version.
+  tray menu, it asks the Gitea API for the latest release and compares it with its version.
 - When a newer release exists, a **Perbarui ke vX.Y.Z** button appears. One click downloads
   the release asset, replaces the running AppImage atomically, refreshes the sender from the
   new bundle and restarts the service. Restart the app to use the new version.
