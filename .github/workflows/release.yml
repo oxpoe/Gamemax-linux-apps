@@ -11,6 +11,11 @@ on:
 permissions:
   contents: write
 
+env:
+  # github.server_url mengikuti alamat saat runner didaftarkan dan bisa jadi IP internal,
+  # jadi URL yang disematkan ke dalam AppImage ditulis eksplisit di sini.
+  RELEASE_URL: https://gitea.oxpoe.qzz.io/oxpoe/Gamemax-linux-apps/releases/download
+
 jobs:
   appimage:
     runs-on: ubuntu-latest
@@ -24,12 +29,13 @@ jobs:
             libgl1 libegl1 libxkbcommon0 libdbus-1-3 libfuse2 fuse zsync libpython3.12
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v5
+        # installers astral, bukan setup-uv: setup-v5 menembak API GitHub dan kena rate limit
+        run: curl -LsSf https://astral.sh/uv/install.sh | env INSTALLER_PREFIX=/usr/local sh
 
       - name: Build AppImage
         env:
           APPIMAGE_EXTRACT_AND_RUN: "1"
-          UPDATE_INFO_URL: ${{ github.server_url }}/${{ github.repository }}/releases/download/${{ github.ref_name }}/GAMEMAX-LCD-x86_64.AppImage.zsync
+          UPDATE_INFO_URL: ${{ env.RELEASE_URL }}/${{ github.ref_name }}/GAMEMAX-LCD-x86_64.AppImage.zsync
         run: bash packaging/build_appimage.sh
 
       - name: Smoke test the bundle (no display)
@@ -43,7 +49,7 @@ jobs:
         run: |
           cd dist
           sha256sum GAMEMAX-LCD-x86_64.AppImage > GAMEMAX-LCD-x86_64.AppImage.sha256
-          zsyncmake -u "${{ github.server_url }}/${{ github.repository }}/releases/download/${{ github.ref_name }}/GAMEMAX-LCD-x86_64.AppImage" \
+          zsyncmake -u "${{ env.RELEASE_URL }}/${{ github.ref_name }}/GAMEMAX-LCD-x86_64.AppImage" \
             -o GAMEMAX-LCD-x86_64.AppImage.zsync GAMEMAX-LCD-x86_64.AppImage
           cat GAMEMAX-LCD-x86_64.AppImage.sha256
           ls -l
